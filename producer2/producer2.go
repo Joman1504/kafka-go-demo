@@ -27,7 +27,8 @@ func main() {
 	// Simulate streaming 20 sensor events with a short delay between them
 	for i := 0; i < 20; i++ {
 		sensor := sensors[i%4]     // rotate through the 4 sensors
-		temp := rand.Intn(30) + 60 // random temperature between 60 and 90
+		temp := rand.Intn(30) + 60 // random temperature between 60 and 90; it's not important that these are realistic, just that they vary
+		// Create a JSON-formatted message with the event number, sensor name, and temperature reading
 		msg := fmt.Sprintf(`{"event": %d, "sensor": "%s", "temp_F": %d}`, i, sensor, temp)
 
 		// Write the message to Kafka; the key is the sensor name, which determines the partition
