@@ -6,8 +6,6 @@ A demonstration project for CS 3700 showing how Apache Kafka and Go's goroutines
 
 - **Stream processing** — events are consumed and processed in real time as they arrive, not batched
 - **Parallel processing** — one goroutine per Kafka partition processes events simultaneously and independently
-- **Backpressure handling** — if a goroutine is busy, new events queue safely in Kafka's partition log until it is ready
-- **Producer decoupling** — two independent producers write to the same topic without knowing about each other; consumers require no changes
 - **Consumer groups** — Kafka automatically distributes partitions across multiple consumer instances, enabling fault tolerance and elastic scalability
 
 ## Project Structure
