@@ -13,21 +13,41 @@ import (
 	kafka "github.com/segmentio/kafka-go" // Kafka client library for Go
 )
 
+// SensorBalancer explicitly maps each sensor name to a fixed partition,
+// guaranteeing one sensor per partition with no hash collisions.
+type SensorBalancer struct {
+	partitionMap map[string]int
+}
+
+func (b *SensorBalancer) Balance(msg kafka.Message, partitions ...int) int {
+	if partition, ok := b.partitionMap[string(msg.Key)]; ok {
+		return partition
+	}
+	return partitions[0] // fallback for unknown keys
+}
+
 func main() {
 	// Create a Kafka writer that connects to the local Kafka cluster and writes to the "sensor-events" topic
 	writer := &kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
-		Topic:    "sensor-events",
-		Balancer: &kafka.Hash{}, // routes by key; same sensor always goes to the same partition
+		Addr:  kafka.TCP("localhost:9092"),
+		Topic: "sensor-events",
+		Balancer: &SensorBalancer{
+			partitionMap: map[string]int{
+				"FOX":    0,
+				"RABBIT": 1,
+				"SNAKE":  2,
+				"OCELOT": 3,
+			},
+		},
 	}
 	defer writer.Close()
 
-	sensors := []string{"FOX1", "FOX2", "FOX3", "FOX4"}
+	sensors := []string{"FOX", "RABBIT", "SNAKE", "OCELOT"}
 
 	fmt.Println("=== PRODUCER 1 STARTED: Streaming sensor data into Kafka ===")
 
 	// Simulate streaming 20 sensor events with a short delay between them
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 8; i++ {
 		sensor := sensors[i%4]     // rotate through the 4 sensors
 		temp := rand.Intn(30) + 60 // random temperature between 60 and 90; it's not important that these are realistic, just that they vary
 		// Create a JSON-formatted message with the event number, sensor name, and temperature reading

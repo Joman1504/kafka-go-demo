@@ -20,16 +20,16 @@ kafka-demo/
 ├── consumer2/
 │   └── consumer_group.go    # Consumer group — Kafka auto-assigns partitions across instances
 ├── producer/
-│   └── producer.go          # Producer 1 — FOX sensors, steady 200ms interval
+│   └── producer.go          # Producer 1 — Animal sensors, steady 200ms interval
 └── producer2/
-    └── producer2.go         # Producer 2 — RABBIT sensors, random 100–600ms interval
+    └── producer2.go         # Producer 2 — Plant sensors, random 100–600ms interval
 ```
 
 ## Producers
 
-**Producer 1** (`producer/producer.go`) streams events from four sensors — `FOX1`, `FOX2`, `FOX3`, `FOX4` — at a steady 200ms interval. The sensor name is used as the message key, so Kafka's hash balancer always routes the same sensor to the same partition.
+**Producer 1** (`producer/producer.go`) streams events from four sensors — `FOX`, `RABBIT`, `SNAKE`, `OCELOT` — at a steady 200ms interval. It uses a `RoundRobin` balancer, spreading messages evenly across partitions regardless of key.
 
-**Producer 2** (`producer2/producer2.go`) streams events from a second set of sensors — `RABBIT1`, `RABBIT2`, `RABBIT3`, `RABBIT4` — at a randomized interval between 100ms and 600ms, simulating uneven real-world data. Both producers write to the same topic independently and simultaneously.
+**Producer 2** (`producer2/producer2.go`) streams events from a second set of sensors — `BERRY`, `CARROT`, `APPLE`, `MELON` — at a randomized interval between 100ms and 600ms, simulating uneven real-world data. It uses a custom `SensorBalancer` that explicitly maps each sensor name to a fixed partition (RABBIT1→0, RABBIT2→1, RABBIT3→2, RABBIT4→3), guaranteeing one sensor per partition with no hash collisions. Both producers write to the same topic independently and simultaneously.
 
 ## Consumers
 
@@ -98,12 +98,12 @@ go run consumer/consumer.go
 
 Wait for all four goroutines to print `Ready`, then start both producers.
 
-**Terminal 2 — Producer 1 (FOX sensors, steady pace):**
+**Terminal 2 — Producer 1 (Animal sensors, steady pace):**
 ```bash
 go run producer/producer.go
 ```
 
-**Terminal 3 — Producer 2 (RABBIT sensors, random pace):**
+**Terminal 3 — Producer 2 (Plant sensors, random pace):**
 ```bash
 go run producer2/producer2.go
 ```
@@ -118,15 +118,15 @@ Open four terminals.
 
 **Terminal 1 — Consumer Group Instance A:**
 ```bash
-go run consumer2/consumer_group.go
+INSTANCE_ID=A go run consumer2/consumer_group.go
 ```
 
 **Terminal 2 — Consumer Group Instance B:**
 ```bash
-go run consumer2/consumer_group.go
+INSTANCE_ID=B go run consumer2/consumer_group.go
 ```
 
-Kafka will split the 4 partitions between the two instances — each handles 2 partitions. Then start both producers in the remaining terminals:
+The `INSTANCE_ID` env var prefixes each log line (e.g. `[A/Goroutine 0]`) so output from the two instances is easy to tell apart. If omitted, logs show just `[Goroutine N]`. Kafka will split the 4 partitions between the two instances — each handles 2 partitions. Then start both producers in the remaining terminals:
 
 **Terminal 3:**
 ```bash
@@ -145,7 +145,7 @@ To demonstrate fault tolerance, press `Ctrl+C` in Terminal 1 while events are fl
 ## What to Watch For
 
 - **Goroutine numbers interleaving** in consumer output — parallel execution; goroutines are not taking turns
-- **FOX and RABBIT sensors appearing in the same goroutine's output** — two independent producers, one consumer pipeline
+- **Animal and plant sensors appearing in the same goroutine's output** — two independent producers, one consumer pipeline
 - **Consumer continuing after producers finish** — backpressure; events queued in Kafka are worked through in order
 - **Partitions splitting across two consumer group instances** — Kafka's automatic load balancing
 - **Rebalancing after killing one consumer group instance** — the surviving instance absorbs all 4 partitions automatically

@@ -11,16 +11,36 @@ import (
 	kafka "github.com/segmentio/kafka-go" // Kafka client library for Go
 )
 
+// SensorBalancer explicitly maps each sensor name to a fixed partition,
+// guaranteeing one sensor per partition with no hash collisions.
+type SensorBalancer struct {
+	partitionMap map[string]int
+}
+
+func (b *SensorBalancer) Balance(msg kafka.Message, partitions ...int) int {
+	if partition, ok := b.partitionMap[string(msg.Key)]; ok {
+		return partition
+	}
+	return partitions[0] // fallback for unknown keys
+}
+
 func main() {
 	// Create a Kafka writer that connects to the local Kafka cluster and writes to the "sensor-events" topic
 	writer := &kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
-		Topic:    "sensor-events",
-		Balancer: &kafka.Hash{}, // routes by key; same sensor always goes to the same partition
+		Addr:  kafka.TCP("localhost:9092"),
+		Topic: "sensor-events",
+		Balancer: &SensorBalancer{
+			partitionMap: map[string]int{
+				"BERRY":  0,
+				"CARROT": 1,
+				"APPLE":  2,
+				"MELON":  3,
+			},
+		},
 	}
 	defer writer.Close()
 
-	sensors := []string{"RABBIT1", "RABBIT2", "RABBIT3", "RABBIT4"}
+	sensors := []string{"BERRY", "CARROT", "APPLE", "MELON"}
 
 	fmt.Println("=== PRODUCER 2 STARTED: Streaming sensor data into Kafka ===")
 
