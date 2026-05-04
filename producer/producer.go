@@ -46,7 +46,7 @@ func main() {
 
 	fmt.Println("=== PRODUCER 1 STARTED: Streaming sensor data into Kafka ===")
 
-	// Simulate streaming 20 sensor events with a short delay between them
+	// Simulate streaming 8 sensor events with a short delay between them
 	for i := 0; i < 8; i++ {
 		sensor := sensors[i%4]     // rotate through the 4 sensors
 		temp := rand.Intn(30) + 60 // random temperature between 60 and 90; it's not important that these are realistic, just that they vary

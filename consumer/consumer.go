@@ -48,7 +48,7 @@ func consumePartition(ctx context.Context, partitionId int, wg *sync.WaitGroup) 
 
 		// Simulate real processing work (e.g. writing to a database, running analytics, etc.)
 		fmt.Printf("[Goroutine %d] <- PROCESSING Partition %d: | Offset %3d | %s\n", partitionId, msg.Partition, msg.Offset, string(msg.Value))
-		time.Sleep(5000 * time.Millisecond) // simulate time-consuming processing
+		time.Sleep(500 * time.Millisecond) // simulate time-consuming processing
 		fmt.Printf("[Goroutine %d] DONE   Partition %d: | Offset %3d \n", partitionId, msg.Partition, msg.Offset)
 	}
 }

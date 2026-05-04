@@ -11,7 +11,7 @@ A demonstration project for CS 3700 showing how Apache Kafka and Go's goroutines
 ## Project Structure
 
 ```
-kafka-demo/
+kafka-go-demo/
 ├── docker-compose.yml       # Runs Kafka and ZooKeeper via Docker
 ├── go.mod
 ├── go.sum
@@ -27,9 +27,9 @@ kafka-demo/
 
 ## Producers
 
-**Producer 1** (`producer/producer.go`) streams events from four sensors — `FOX`, `RABBIT`, `SNAKE`, `OCELOT` — at a steady 200ms interval. It uses a `RoundRobin` balancer, spreading messages evenly across partitions regardless of key.
+**Producer 1** (`producer/producer.go`) streams events from four sensors — `FOX`, `RABBIT`, `SNAKE`, `OCELOT` — at a steady 200ms interval. It uses a custom `SensorBalancer` that explicitly maps each sensor name to a fixed partition (FOX→0, RABBIT→1, SNAKE→2, OCELOT→3), guaranteeing one sensor per partition with no hash collisions. Both producers write to the same topic independently and simultaneously.
 
-**Producer 2** (`producer2/producer2.go`) streams events from a second set of sensors — `BERRY`, `CARROT`, `APPLE`, `MELON` — at a randomized interval between 100ms and 600ms, simulating uneven real-world data. It uses a custom `SensorBalancer` that explicitly maps each sensor name to a fixed partition (RABBIT1→0, RABBIT2→1, RABBIT3→2, RABBIT4→3), guaranteeing one sensor per partition with no hash collisions. Both producers write to the same topic independently and simultaneously.
+**Producer 2** (`producer2/producer2.go`) streams events from a second set of sensors — `BERRY`, `CARROT`, `APPLE`, `MELON` — at a randomized interval between 100ms and 600ms, simulating uneven real-world data. It uses a `RoundRobin` balancer, spreading messages evenly across partitions regardless of key.
 
 ## Consumers
 
@@ -128,12 +128,12 @@ INSTANCE_ID=B go run consumer2/consumer_group.go
 
 The `INSTANCE_ID` env var prefixes each log line (e.g. `[A/Goroutine 0]`) so output from the two instances is easy to tell apart. If omitted, logs show just `[Goroutine N]`. Kafka will split the 4 partitions between the two instances — each handles 2 partitions. Then start both producers in the remaining terminals:
 
-**Terminal 3:**
+**Terminal 3 — Producer 1 (Animal sensors, steady pace):**
 ```bash
 go run producer/producer.go
 ```
 
-**Terminal 4:**
+**Terminal 4 — Producer 2 (Plant sensors, random pace):**
 ```bash
 go run producer2/producer2.go
 ```
