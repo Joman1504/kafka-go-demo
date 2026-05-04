@@ -1,4 +1,5 @@
 // This is a second producer that simulates streaming sensor data into Kafka.
+// The number of events can be specified as a command-line argument (e.g. go run producer2/producer2.go 20); defaults to 8.
 
 package main
 
@@ -6,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go" // Kafka client library for Go
@@ -20,12 +23,22 @@ func main() {
 	}
 	defer writer.Close()
 
+	// Parse optional event count from command-line argument; default to 8
+	numEvents := 8
+	if len(os.Args) > 1 {
+		if n, err := strconv.Atoi(os.Args[1]); err == nil && n > 0 {
+			numEvents = n
+		} else {
+			fmt.Fprintf(os.Stderr, "Invalid argument %q: expected a positive integer. Using default of %d.\n", os.Args[1], numEvents)
+		}
+	}
+
 	sensors := []string{"BERRY", "CARROT", "APPLE", "MELON"}
 
-	fmt.Println("=== PRODUCER 2 STARTED: Streaming sensor data into Kafka ===")
+	fmt.Printf("=== PRODUCER 2 STARTED: Streaming %d sensor events into Kafka ===\n", numEvents)
 
-	// Simulate streaming 8 sensor events with a short delay between them
-	for i := 0; i < 8; i++ {
+	// Simulate streaming sensor events with a short delay between them
+	for i := 0; i < numEvents; i++ {
 		sensor := sensors[i%4]     // rotate through the 4 sensors
 		temp := rand.Intn(30) + 60 // random temperature between 60 and 90; it's not important that these are realistic, just that they vary
 		// Create a JSON-formatted message with the event number, sensor name, and temperature reading
