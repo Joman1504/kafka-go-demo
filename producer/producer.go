@@ -55,6 +55,7 @@ func main() {
 		}
 	}
 
+	// Producers were originally FOX1-4 and RABBIT1-4, switched to animals and plants to better distinguish
 	sensors := []string{"FOX", "RABBIT", "SNAKE", "OCELOT"}
 
 	fmt.Printf("=== PRODUCER 1 STARTED: Streaming %d sensor events into Kafka ===\n", numEvents)
